@@ -11,6 +11,8 @@
 # License:      GPLv2                                                          #
 ################################################################################
 
+set -o pipefail
+
 STATE_OK=0           # define the exit code if status is OK
 STATE_WARNING=1      # define the exit code if status is Warning
 STATE_CRITICAL=2     # define the exit code if status is Critical
@@ -53,12 +55,14 @@ if [ "${host}" = "" -o "${login}" = "" -o "${password}" = "" ]; then
     exit 1;
 fi
 
-mapfile -t output < <(SSHPASS="${password}" timeout -s KILL ${timeout} sshpass -e ssh -l "${login}" ${host} show environment leds det location all | tr -d '\r')
+out=$(SSHPASS="${password}" timeout -s KILL ${timeout} sshpass -e ssh -l "${login}" ${host} show environment leds det location all | tr -d '\r')
 
 if [ $? -ne 0 ]; then
     echo "could not query ${host} via SSH"
     exit ${STATE_UNKNOWN}
 fi
+
+mapfile -t output < <(echo -e "${out}")
 
 cnt=0
 ret=${STATE_OK}
