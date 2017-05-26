@@ -56,9 +56,20 @@ if [ "${host}" = "" -o "${login}" = "" -o "${password}" = "" ]; then
 fi
 
 out=$(SSHPASS="${password}" timeout -s KILL ${timeout} sshpass -e ssh -l "${login}" ${host} show environment leds det location all | tr -d '\r')
+ret=$?
 
-if [ $? -ne 0 ]; then
-    echo "could not query ${host} via SSH"
+if [ $ret -eq 5 ]; then
+    echo "could not query ${host} via SSH (invalid password)"
+    exit ${STATE_UNKNOWN}
+fi
+
+if [ $ret -eq 6 ]; then
+    echo "could not query ${host} via SSH (public key unknown)"
+    exit ${STATE_UNKNOWN}
+fi
+
+if [ $ret -ne 0 ]; then
+    echo "could not query ${host} via SSH (error $ret)"
     exit ${STATE_UNKNOWN}
 fi
 
