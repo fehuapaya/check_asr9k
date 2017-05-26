@@ -18,8 +18,8 @@
  
 # Allow this script to handle ssh connection issues
  expect {
- timeout { send_user "\nTimeout Exceeded - Check Host\n"; exit 1 }
- eof { send_user "\nSSH Connection To $hostname Failed\n"; exit 1 }
+ timeout { send_user "\nTimeout Exceeded - Check Host\n"; exit 137 }
+ eof { send_user "\nSSH Connection To $hostname Failed\n"; exit 136 }
  "*#" {}
  "*assword:" {
  send "$password\n"

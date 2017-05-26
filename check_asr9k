@@ -60,6 +60,16 @@ fi
 out=$(timeout -s KILL ${timeout} $(dirname "${BASH_SOURCE[0]}")/check_asr9k.exp "${host}" "${login}" "${password}" | tr -d '\r')
 ret=$?
 
+if [ $ret -eq 136 ]; then
+    echo "UNKNOWN - could not query ${host} via SSH (connection failed)"
+    exit ${STATE_UNKNOWN}
+fi
+
+if [ $ret -eq 137 ]; then
+    echo "UNKNOWN - could not query ${host} via SSH (command timed out)"
+    exit ${STATE_UNKNOWN}
+fi
+
 if [ $ret -ne 0 ]; then
     echo "UNKNOWN - could not query ${host} via SSH (error $ret)"
     exit ${STATE_UNKNOWN}
