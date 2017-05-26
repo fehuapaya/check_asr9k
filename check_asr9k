@@ -53,7 +53,7 @@ if [ "${host}" = "" -o "${login}" = "" -o "${password}" = "" ]; then
     exit 1;
 fi
 
-mapfile -t output < <(SSHPASS="${password}" timeout -k 0 ${timeout} sshpass -e ssh -l "${login}" ${host} show environment leds det location all | tr -d '\r')
+mapfile -t output < <(SSHPASS="${password}" timeout -s KILL ${timeout} sshpass -e ssh -l "${login}" ${host} show environment leds det location all | tr -d '\r')
 
 if [ $? -ne 0 ]; then
     echo "could not query ${host} via SSH"
