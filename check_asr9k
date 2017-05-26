@@ -110,7 +110,7 @@ if [ $cnt -eq 0 ]; then
 fi
 
 if [ "${#alarms[@]}" = "0" ]; then
-   alarms+="${cnt} LEDs are Off"
+   alarms+="All ${cnt} LEDs are Off"
 fi
 
 printf '%s - %s\n' "${STATE_TXT[${ret}]}" "${alarms[@]}"
