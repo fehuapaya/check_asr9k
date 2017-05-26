@@ -55,7 +55,7 @@ if [ "${host}" = "" -o "${login}" = "" -o "${password}" = "" ]; then
     exit 1;
 fi
 
-out=$(timeout -s KILL ${timeout} ./check_asr9k.exp "${host}" "${login}" "${password}" | tr -d '\r')
+out=$(timeout -s KILL ${timeout} $(dirname "${BASH_SOURCE[0]}")/check_asr9k.exp "${host}" "${login}" "${password}" | tr -d '\r')
 ret=$?
 
 if [ $ret -ne 0 ]; then
