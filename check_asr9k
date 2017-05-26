@@ -1,0 +1,100 @@
+#!/bin/bash
+################################################################################
+# Script:       check_asr9k                                                    #
+# Author:       Peter Lieven <pl@kamp.de>                                      #
+# Purpose:      Check the environment status of an Cisco ASR 9k                #
+# Description:  Checks the environment / LED Status of an ASR 9k by connection #
+#               to the device via SSH.                                         #
+#               You need to create a user for this purpose on the device       #
+#               within the 'read-only-tg' group.                               #
+# Tested on:    Cisco ASR 9001                                                 #
+# License:      GPLv2                                                          #
+################################################################################
+
+STATE_OK=0           # define the exit code if status is OK
+STATE_WARNING=1      # define the exit code if status is Warning
+STATE_CRITICAL=2     # define the exit code if status is Critical
+STATE_UNKNOWN=3      # define the exit code if status is Unknown
+PATH=/usr/local/bin:/usr/bin:/bin # Set path
+
+for cmd in ssh sshpass tr timeout [
+do
+ if ! `which ${cmd} 1>/dev/null`
+ then
+ echo "${cmd} does not exist, please check if command exists and PATH is correct"
+ exit ${STATE_UNKNOWN}
+ fi
+done
+
+usage="check_asr9k (c) 2017 Peter Lieven <pl@kamp.de> (published under GPL licence)\n
+Usage: ./check_asr9k -H host -l login -p password [-t timeout]\n"
+
+if [ "${1}" = "--help" -o "${#}" = "0" ]; then
+    echo -e "${usage}";
+    exit 1;
+fi 
+
+timeout=10
+while getopts "H:l:p:t:" Input;
+do
+    case ${Input} in
+    H)   host=${OPTARG};;
+    l)   login=${OPTARG};;
+    p)   password=${OPTARG};;
+    t)   timeout=${OPTARG};;
+    *)   echo -e "${usage}";
+         exit 1
+         ;;
+    esac
+done
+
+if [ "${host}" = "" -o "${login}" = "" -o "${password}" = "" ]; then
+    echo -e "${usage}";
+    exit 1;
+fi
+
+mapfile -t output < <(SSHPASS="${password}" timeout -k 0 ${timeout} sshpass -e ssh -l "${login}" ${host} show environment leds det location all | tr -d '\r')
+
+if [ $? -ne 0 ]; then
+    echo "could not query ${host} via SSH"
+    exit ${STATE_UNKNOWN}
+fi
+
+cnt=0
+ret=${STATE_OK}
+alarms=()
+for line in "${output[@]}" 
+do
+    x=(${line})
+    if [ "${x[0]}" = "host" ]; then
+        ((cnt++))
+        if [ "${x[2]}" != "Off" ]; then
+            alarms+="${x[1]}(${x[3]}) "
+            case ${x[1]} in
+            "Critical-Alarm")
+                ret=${STATE_CRITICAL}
+                ;;
+            "Major-Alarm")
+                ret=${STATE_CRITICAL}
+                ;;
+            *)
+                if [ ${ret} -eq 0 ]; then
+                    ret=${STATE_WARNING}
+                fi
+                ;;
+            esac
+        fi
+    fi
+done
+
+if [ $cnt -eq 0 ]; then
+    echo "could not parse LED status output"
+    exit ${STATE_UNKNOWN}
+fi
+
+if [ "${#alarms[@]}" = "0" ]; then
+   alarms+="${cnt} LEDs are Off"
+fi
+
+printf '%s\n' "${alarms[@]}"
+exit ${ret}
