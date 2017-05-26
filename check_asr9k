@@ -86,7 +86,7 @@ do
     if [ "${x[0]}" = "host" ]; then
         ((cnt++))
         if [ "${x[2]}" != "Off" ]; then
-            alarms+="${x[1]}(${x[3]}) "
+            alarms+="${x[1]}(${x[@]:3}) "
             case ${x[1]} in
             "Critical-Alarm")
                 ret=${STATE_CRITICAL}
