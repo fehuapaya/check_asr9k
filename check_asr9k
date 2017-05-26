@@ -17,6 +17,8 @@ STATE_OK=0           # define the exit code if status is OK
 STATE_WARNING=1      # define the exit code if status is Warning
 STATE_CRITICAL=2     # define the exit code if status is Critical
 STATE_UNKNOWN=3      # define the exit code if status is Unknown
+STATE_TXT=(OK WARNING CRITICAL UNKNOWN)
+
 PATH=/usr/local/bin:/usr/bin:/bin # Set path
 
 for cmd in ssh tr timeout expect [
@@ -59,7 +61,7 @@ out=$(timeout -s KILL ${timeout} $(dirname "${BASH_SOURCE[0]}")/check_asr9k.exp 
 ret=$?
 
 if [ $ret -ne 0 ]; then
-    echo "could not query ${host} via SSH (error $ret)"
+    echo "UNKNOWN - could not query ${host} via SSH (error $ret)"
     exit ${STATE_UNKNOWN}
 fi
 
@@ -93,7 +95,7 @@ do
 done
 
 if [ $cnt -eq 0 ]; then
-    echo "could not parse LED status output"
+    echo "UNKNOWN - could not parse LED status output"
     exit ${STATE_UNKNOWN}
 fi
 
@@ -101,5 +103,5 @@ if [ "${#alarms[@]}" = "0" ]; then
    alarms+="${cnt} LEDs are Off"
 fi
 
-printf '%s\n' "${alarms[@]}"
+printf '%s - %s\n' "${STATE_TXT[${ret}]}" "${alarms[@]}"
 exit ${ret}
