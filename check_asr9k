@@ -19,7 +19,7 @@ STATE_CRITICAL=2     # define the exit code if status is Critical
 STATE_UNKNOWN=3      # define the exit code if status is Unknown
 PATH=/usr/local/bin:/usr/bin:/bin # Set path
 
-for cmd in ssh sshpass tr timeout [
+for cmd in ssh tr timeout expect [
 do
  if ! `which ${cmd} 1>/dev/null`
  then
@@ -55,18 +55,8 @@ if [ "${host}" = "" -o "${login}" = "" -o "${password}" = "" ]; then
     exit 1;
 fi
 
-out=$(SSHPASS="${password}" timeout -s KILL ${timeout} sshpass -e ssh -l "${login}" ${host} show environment leds det location all | tr -d '\r')
+out=$(timeout -s KILL ${timeout} ./check_asr9k.exp "${host}" "${login}" "${password}" | tr -d '\r')
 ret=$?
-
-if [ $ret -eq 5 ]; then
-    echo "could not query ${host} via SSH (invalid password)"
-    exit ${STATE_UNKNOWN}
-fi
-
-if [ $ret -eq 6 ]; then
-    echo "could not query ${host} via SSH (public key unknown)"
-    exit ${STATE_UNKNOWN}
-fi
 
 if [ $ret -ne 0 ]; then
     echo "could not query ${host} via SSH (error $ret)"
