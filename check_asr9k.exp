@@ -36,5 +36,6 @@
  send "show environment leds det location all\n"
  expect "#"
  send "exit\n"
+ expect eof
  
  exit
