@@ -14,6 +14,7 @@
  send_user "\n"
  
 # Don't check keys
+ set env(TERM) vt100
  spawn ssh -o StrictHostKeyChecking=no $username\@$hostname
  
 # Allow this script to handle ssh connection issues
