@@ -31,6 +31,8 @@
  expect "#"
  send "terminal length 0\n"
  expect "#"
+ send "terminal width 0\n"
+ expect "#"
  send "show environment leds det location all\n"
  expect "#"
  send "exit\n"
