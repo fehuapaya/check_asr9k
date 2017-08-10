@@ -13,9 +13,9 @@
  send_user ">>>>>  Working on $hostname @ [exec date] <<<<<\n"
  send_user "\n"
  
-# Don't check keys
+# Don't check keys and allow ssh-dss (CSCuw36025)
  set env(TERM) vt100
- spawn ssh -o StrictHostKeyChecking=no $username\@$hostname
+ spawn ssh -o StrictHostKeyChecking=no -o HostKeyAlgorithms=+ssh-dss $username\@$hostname
  
 # Allow this script to handle ssh connection issues
  expect {
