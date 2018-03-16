@@ -90,9 +90,12 @@ do
             if [ ${x[3]} -eq 0 ]; then
                 ret=${STATE_CRITICAL}
                 msg="Ping to $destination with $size byte datagram FAILED"
-            else
+            elif [ ${x[3]} -eq 100 ]; then
                 ret=${STATE_OK}
                 msg="Ping to $destination with $size byte datagram successful"
+            else
+                ret=${STATE_WARNING}
+                msg="Ping to $destination with $size byte datagram has packet loss, success rate is only ${x[3]} percent"
             fi
         fi
     fi
