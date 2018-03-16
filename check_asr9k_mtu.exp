@@ -1,0 +1,43 @@
+#!/usr/bin/expect -f
+ 
+# Set variables
+ set hostname [lindex $argv 0]
+ set username [lindex $argv 1]
+ set password [lindex $argv 2]
+ set destination [lindex $argv 3]
+ set size [lindex $argv 4]
+ 
+# Log results
+# log_file -a ~/results.log
+ 
+# Announce which device we are working on and at what time
+ send_user "\n"
+ send_user ">>>>>  Working on $hostname @ [exec date] <<<<<\n"
+ send_user "\n"
+ 
+# Don't check keys and allow ssh-dss (CSCuw36025)
+ set env(TERM) vt100
+ spawn ssh -o StrictHostKeyChecking=no -o HostKeyAlgorithms=+ssh-dss $username\@$hostname
+ 
+# Allow this script to handle ssh connection issues
+ expect {
+ timeout { send_user "\nTimeout Exceeded - Check Host\n"; exit 137 }
+ eof { send_user "\nSSH Connection To $hostname Failed\n"; exit 136 }
+ "*#" {}
+ "*assword:" {
+ send "$password\n"
+ }
+ }
+ 
+# Let's go to configure mode
+ expect "#"
+ send "terminal length 0\n"
+ expect "#"
+ send "terminal width 0\n"
+ expect "#"
+ send "ping $destination df-bit size $size count 3\n"
+ expect "#"
+ send "exit\n"
+ expect eof
+ 
+ exit

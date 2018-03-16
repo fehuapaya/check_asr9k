@@ -1,0 +1,102 @@
+#!/bin/bash
+################################################################################
+# Script:       check_asr9k                                                    #
+# Author:       Peter Lieven <pl@kamp.de>                                      #
+# Purpose:      Check the environment status of an Cisco ASR 9k                #
+# Description:  Checks the environment / LED Status of an ASR 9k by connection #
+#               to the device via SSH.                                         #
+#               You need to create a user for this purpose on the device       #
+#               within the 'read-only-tg' group.                               #
+# Tested on:    Cisco ASR 9001                                                 #
+# License:      GPLv2                                                          #
+################################################################################
+
+set -o pipefail
+
+STATE_OK=0           # define the exit code if status is OK
+STATE_WARNING=1      # define the exit code if status is Warning
+STATE_CRITICAL=2     # define the exit code if status is Critical
+STATE_UNKNOWN=3      # define the exit code if status is Unknown
+STATE_TXT=(OK WARNING CRITICAL UNKNOWN)
+
+PATH=/usr/local/bin:/usr/bin:/bin # Set path
+
+for cmd in ssh tr timeout expect [
+do
+ if ! `which ${cmd} 1>/dev/null`
+ then
+ echo "${cmd} does not exist, please check if command exists and PATH is correct"
+ exit ${STATE_UNKNOWN}
+ fi
+done
+
+usage="check_asr9k_mtu (c) 2017 Peter Lieven <pl@kamp.de> (published under GPL licence)\n
+Usage: check_asr9k_mtu -H host -l login -p password -d destination -s size [-t timeout]\n"
+
+if [ "${1}" = "--help" -o "${#}" = "0" ]; then
+    echo -e "${usage}";
+    exit 1;
+fi 
+
+timeout=10
+while getopts "H:l:p:t:d:s:" Input;
+do
+    case ${Input} in
+    H)   host=${OPTARG};;
+    l)   login=${OPTARG};;
+    p)   password=${OPTARG};;
+    t)   timeout=${OPTARG};;
+    d)   destination=${OPTARG};;
+    s)   size=${OPTARG};;
+    *)   echo -e "${usage}";
+         exit 1
+         ;;
+    esac
+done
+
+if [ "${host}" = "" -o "${login}" = "" -o "${password}" = "" -o "${size}" = "" -o "${destination}" = "" ]; then
+    echo -e "${usage}";
+    exit 1;
+fi
+
+out=$(timeout -s KILL ${timeout} $(dirname "${BASH_SOURCE[0]}")/check_asr9k_mtu.exp "${host}" "${login}" "${password}" "${destination}" "${size}" | tr -d '\r')
+ret=$?
+
+if [ $ret -eq 136 ]; then
+    echo "UNKNOWN - could not query ${host} via SSH (connection failed)"
+    exit ${STATE_UNKNOWN}
+fi
+
+if [ $ret -eq 137 ]; then
+    echo "UNKNOWN - could not query ${host} via SSH (command timed out)"
+    exit ${STATE_UNKNOWN}
+fi
+
+if [ $ret -ne 0 ]; then
+    echo "UNKNOWN - could not query ${host} via SSH (error $ret)"
+    exit ${STATE_UNKNOWN}
+fi
+
+mapfile -t output < <(echo -e "${out}")
+
+cnt=0
+ret=${STATE_UNKNOWN}
+msg=
+for line in "${output[@]}" 
+do
+    x=(${line})
+    if [ "${x[0]}" = "Success" ]; then
+        if [ "${x[1]}" = "rate" ]; then
+            if [ ${x[3]} -eq 0 ]; then
+                ret=${STATE_CRITICAL}
+                msg="Ping to $destination with $size byte datagram FAILED"
+            else
+                ret=${STATE_OK}
+                msg="Ping to $destination with $size byte datagram successful"
+            fi
+        fi
+    fi
+done
+
+printf '%s %s\n' "${STATE_TXT[${ret}]}" "$msg"
+exit ${ret}
