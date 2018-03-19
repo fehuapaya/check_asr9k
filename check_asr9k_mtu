@@ -1,12 +1,10 @@
 #!/bin/bash
 ################################################################################
-# Script:       check_asr9k                                                    #
+# Script:       check_asr9k_mtu                                                #
 # Author:       Peter Lieven <pl@kamp.de>                                      #
-# Purpose:      Check the environment status of an Cisco ASR 9k                #
-# Description:  Checks the environment / LED Status of an ASR 9k by connection #
-#               to the device via SSH.                                         #
-#               You need to create a user for this purpose on the device       #
-#               within the 'read-only-tg' group.                               #
+# Purpose:      Ping check a destination from the ASR with a given packet size #
+# Description:  You need to create a user for this purpose on the device       #
+#               within the 'operator' group.                                   #
 # Tested on:    Cisco ASR 9001                                                 #
 # License:      GPLv2                                                          #
 ################################################################################
